@@ -103,6 +103,11 @@ if (isset ($PAGES)) {
 		
 		<p id="puser">
 			<label for="user">Name:</label>
+<?php if (AUTH && PASS === false): ?>
+			<input name="username" id="user" type="text" size="28"
+					maxlength="<?php echo SIZE_NAME?>" required
+					 disabled value="<?php echo NAME?>" />
+<?php else: ?>
 			<input name="username" id="user" type="text" size="28" tabindex="3"
 			       maxlength="<?php echo SIZE_NAME?>" required autocomplete="on"
 			       placeholder="Your name" value="<?php echo $FORM['NAME']?>" />
@@ -111,15 +116,20 @@ if (isset ($PAGES)) {
 			<input name="password" id="pass" type="password" size="28" tabindex="4"
 			       maxlength="<?php echo SIZE_PASS?>" required autocomplete="on"
 			       placeholder="A password to keep your name" value="<?php echo $FORM['PASS']?>" />
+<?php endif; ?>
 		</p><p id="pemail">
 			<label class="email">Email:</label>
 			<input name="email" type="text" value="example@abc.com" tabindex="0" required autocomplete="off" />
 			(Leave this as-is, it’s a trap!)
 		</p>
 <?php switch ($FORM['ERROR']):
-	case ERROR_NONE: ?>
+	case ERROR_NONE:
+		if (AUTH && PASS === false): ?>
+		<p id="ok">You are logged in.</p>
+<?php else: ?>
 		<p id="ok">There is no need to “register”, just enter the same name + password of your choice every time.</p>
-<?php break;
+<?php endif;
+		break;
 	case ERROR_NAME: ?>
 		<p id="error">Enter a name. You’ll need to use this with the password each time.</p>
 <?php break;

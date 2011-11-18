@@ -53,30 +53,45 @@ define ('ERROR_AUTH',		5);					//name / password did not match
 //PHP 5.3 issues a warning if the timezone is not set when using date commands
 date_default_timezone_set (FORUM_TIMEZONE);
 
+if (!isset($_SERVER['PHP_AUTH_USER'])) {
+    header('WWW-Authenticate: Basic realm="My Realm"');
+    header('HTTP/1.0 401 Unauthorized');
+    echo 'Text to send if user hits Cancel button';
+    exit;
+}
+
+
+
 
 /* get input
    ====================================================================================================================== */
-//all pages can accept a name / password when committing actions (new thread / post &c.)
-define ('NAME', safeGet (@$_POST['username'], SIZE_NAME));
-define ('PASS', safeGet (@$_POST['password'], SIZE_PASS, false));
-
-//if name & password are provided, validate them
-if (
-	NAME && PASS &&
-	//the email check is a fake hidden field in the form to try and fool spam bots
-	isset ($_POST['email']) && @$_POST['email'] == 'example@abc.com' &&
-	//I wonder what this does...?
-	(isset ($_POST['x'], $_POST['y']) || isset ($_POST['submit_x'], $_POST['submit_y']))
-) {
-	//users are stored as text files based on the hash of the given name
-	$name = hash ('sha512', strtolower (NAME));
-	$user = FORUM_ROOT."/users/$name.txt";
-	//create the user, if new
-	if (!file_exists ($user)) file_put_contents ($user, hash ('sha512', $name.PASS));
-	//does password match?
-	define ('AUTH', file_get_contents ($user) == hash ('sha512', $name.PASS));
+if (isset ($_SERVER['PHP_AUTH_USER'])) {
+	define ('NAME', safeGet ($_SERVER['PHP_AUTH_USER']));
+	define ('PASS', false);
+	define ('AUTH', true);
 } else {
-	define ('AUTH', false);
+	//all pages can accept a name / password when committing actions (new thread / post &c.)
+	define ('NAME', safeGet (@$_POST['username'], SIZE_NAME));
+	define ('PASS', safeGet (@$_POST['password'], SIZE_PASS, false));
+
+	//if name & password are provided, validate them
+	if (
+		NAME && PASS &&
+		//the email check is a fake hidden field in the form to try and fool spam bots
+		isset ($_POST['email']) && @$_POST['email'] == 'example@abc.com' &&
+		//I wonder what this does...?
+		(isset ($_POST['x'], $_POST['y']) || isset ($_POST['submit_x'], $_POST['submit_y']))
+	) {
+		//users are stored as text files based on the hash of the given name
+		$name = hash ('sha512', strtolower (NAME));
+		$user = FORUM_ROOT."/users/$name.txt";
+		//create the user, if new
+		if (!file_exists ($user)) file_put_contents ($user, hash ('sha512', $name.PASS));
+		//does password match?
+		define ('AUTH', file_get_contents ($user) == hash ('sha512', $name.PASS));
+	} else {
+		define ('AUTH', false);
+	}
 }
 
 //all our pages use path (often optional) so this is done here

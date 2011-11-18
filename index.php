@@ -18,7 +18,7 @@ define ('TEXT',  safeGet (@$_POST['text'],  SIZE_TEXT ));
 /* ====================================================================================================================== */
 
 //has the user submitted a new thread? (and is the info valid?)
-if (FORUM_ENABLED && NAME && PASS && AUTH && TITLE && TEXT && @$_POST['email'] == 'example@abc.com') {
+if (FORUM_ENABLED && AUTH && TITLE && TEXT && @$_POST['email'] == 'example@abc.com') {
 	//the file on disk is a simplified version of the title:
 	$translit = preg_replace (
 		//replace non alphanumerics with underscores and don’t use more than 2 in a row
@@ -168,10 +168,11 @@ if (FORUM_ENABLED) $FORM = array (
 	'TEXT'	=> safeHTML (TEXT),
 	'ERROR'	=> empty ($_POST) ? ERROR_NONE	//no problem? show default help text
 		 : (!NAME  ? ERROR_NAME		//the name is missing
-		 : (!PASS  ? ERROR_PASS		//the password is missing
+		 : (!PASS && PASS !== false
+		           ? ERROR_PASS		//the password is missing
 		 : (!TITLE ? ERROR_TITLE	//the title is missing
 		 : (!TEXT  ? ERROR_TEXT		//the message text is missing
-		 : ERROR_AUTH))))		//the name / password pair didn’t match
+		 : (!AUTH  ? ERROR_AUTH : ERROR_NONE)))))		//the name / password pair didn’t match
 );
 
 //all the data prepared, now output the HTML
