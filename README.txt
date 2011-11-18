@@ -1,4 +1,4 @@
-NoNonsense Forum v6 © Copyright CC-BY 3.0 Kroc Camen of Camen Design
+NoNonsense Forum v7 © Copyright CC-BY 3.0 Kroc Camen of Camen Design
 ====================================================================
 A simple forum that focuses on discussion and simplicity.
 
@@ -191,7 +191,7 @@ Acknowledgements:
 *	"JJ"			-	Quote syntax
 *	"Martijn"		-	Lynx support
 *	"Temukki"		-	Bugs
-*	Richard van Velzen	-	Running NNF from a folder
+*	Richard van Velzen	-	subfolder support / other fixes
 
 *	The users of Camen Design Forum <forum.camendesign.com>
 	for testing and support
