@@ -53,15 +53,6 @@ define ('ERROR_AUTH',		5);					//name / password did not match
 //PHP 5.3 issues a warning if the timezone is not set when using date commands
 date_default_timezone_set (FORUM_TIMEZONE);
 
-if (!isset($_SERVER['PHP_AUTH_USER'])) {
-    header('WWW-Authenticate: Basic realm="My Realm"');
-    header('HTTP/1.0 401 Unauthorized');
-    echo 'Text to send if user hits Cancel button';
-    exit;
-}
-
-
-
 
 /* get input
    ====================================================================================================================== */
