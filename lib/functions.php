@@ -170,7 +170,7 @@ function formatText ($text, $rss=NULL) {
 			(?(3)(							# $4 = folders and filename, relative URL
 				(?>						# folders and filename
 					\)(?![:\.,"”»]?(?:\s|$))|		# ignore brackets on end with punctuation
-					[:\.,"”»](?!\s|$)|			# ignore various characters on the end
+					[:\.,"”»](?!\s|$|&gt;)|			# ignore various characters on the end
 					[^\s:)\.,"”»]				# the rest, including bookmark
 				)*
 			)?)
