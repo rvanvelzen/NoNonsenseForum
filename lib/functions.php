@@ -110,7 +110,8 @@ function safeGet ($data, $len, $trim=true) {
 //sanitise output:
 function safeHTML ($text) {
 	//encode a string for insertion into an HTML element
-	return htmlspecialchars ($text, ENT_NOQUOTES);
+	//(`ENT_XHTML` & `ENT_SUBSTITUTE` are PHP5.4+ only)
+	return htmlspecialchars ($text, ENT_NOQUOTES | @ENT_XHTML | @ENT_SUBSTITUTE, 'UTF-8');
 }
 function safeURL ($text, $is_HTML=true) {
 	//encode a string to be used in a URL, keeping path separators
@@ -161,7 +162,7 @@ function formatText ($text, $rss=NULL) {
 	/* hyperlinks:
 	   -------------------------------------------------------------------------------------------------------------- */
 	//find full URLs and turn into HTML hyperlinks. we also detect e-mail addresses automatically
-	$text = preg_replace (
+	while (preg_match (
 		'/(?:
 			((?:(?:http|ftp)s?|irc)?:\/\/)				# $1 = protocol
 			(							# $2 = friendly URL (no protocol)
@@ -169,16 +170,32 @@ function formatText ($text, $rss=NULL) {
 			)(\/)?							# $3 = slash is excluded from friendly URL
 			(?(3)(							# $4 = folders and filename, relative URL
 				(?>						# folders and filename
+					"(?!\/?&gt;|\s|$)|			# ignore the end of an HTML hyperlink
 					\)(?![:\.,"”»]?(?:\s|$))|		# ignore brackets on end with punctuation
-					[:\.,"”»](?!\s|$|&gt;)|			# ignore various characters on the end
+					[:\.,”»](?!\s|$)|			# ignore various characters on the end
 					[^\s:)\.,"”»]				# the rest, including bookmark
 				)*
 			)?)
 		|
 			([a-z0-9\._%+\-]+@[a-z0-9\.\-]{1,}(?:\.[a-z]{2,6})+)	# $5 = e-mail
-		)/exiu',
-		'"<a href=\"".(\'$5\'?\'mailto:$5\':(\'$1\'?\'$1\':"http://").\'$2$3$4\').\'" rel="nofollow">$0</a>\'',
-	$text);
+		)/xiu',
+		//capture the starting point of the match, so that `$m[x][0]` is the text and $m[x][1] is the offset
+		$text, $m, PREG_OFFSET_CAPTURE,
+		//use an offset to search from so we don’t get stuck in an infinite loop
+		//(this isn’t valid the first time around obviously so gives 0)
+		@($m[0][1] + strlen ($replace))
+		
+	//replace the URL in the source text with a hyperlinked version:
+	)) $text = substr_replace ($text, $replace =
+		'<a href="'.(@$m[5][0]	? 'mailto:'.$m[5][0]			//is this an e-mail address?
+					: ($m[1][0] ? $m[1][0] : 'http://'))	//has a protocol been given?
+		//rest of the URL [domain . slash . everything-else]
+		//(encode double-quotes without double-encoding existing ampersands; this is the PHP5.2.3 requirement)
+		.htmlspecialchars ($m[2][0].@$m[3][0].@$m[4][0], ENT_COMPAT, 'UTF-8', false).'" rel="nofollow">'
+		.$m[0][0].'</a>',
+		//where to substitute
+		$m[0][1], strlen ($m[0][0])
+	);
 	
 	/* inline formatting:
 	   -------------------------------------------------------------------------------------------------------------- */
@@ -245,9 +262,7 @@ function formatText ($text, $rss=NULL) {
 		//find all possible name references in the text:
 		//(that is, any "@" followed by text up to the end of a line. note that this means that what might be
 		//matched may include additional text that *isn't* part of the name, e.g. "@bob How are you?")
-		while (preg_match ('/(?:^|\s+)(@.+)/m', $text, $m, PREG_OFFSET_CAPTURE, @$offset)) {
-			print_r ($m);
-			
+		$offset = 0; while (preg_match ('/(?:^|\s+)(@.+)/m', $text, $m, PREG_OFFSET_CAPTURE, $offset)) {
 			//check each of the known names in the thread and see if one fits the source text reference
 			//e.g. does "@bob How are you?" begin with "bob"
 			foreach ($names as $name) if (stripos ($m[1][0], $name) === 1)
